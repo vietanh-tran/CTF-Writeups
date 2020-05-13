@@ -1,6 +1,6 @@
 # CSAW 2018 getit
 
-PIE is disabled. Easy overflow and call to win function. 
+```PIE``` and ```canary``` are disabled. Easy overflow and call to win function. 
 
 ```c
   puts("Do you gets it??");
