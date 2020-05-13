@@ -1,1 +1,1 @@
-Write-ups from various competitions, both old and present.
+My solutions for various challenges from CTF competitions, both old and present.
