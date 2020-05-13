@@ -1,6 +1,6 @@
 # CSAW 2016 warmup
 
-```PIE``` is disabled and the binary leaks the address of the win function.
+```PIE``` and ```canary``` are disabled and the binary leaks the address of the win function.
 
 ```c
   sprintf(local_88,"%p\n",easy);
