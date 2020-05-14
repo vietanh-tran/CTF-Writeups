@@ -1,4 +1,4 @@
-# Boston Key Part 2016 Simple Calc
+# Boston Key Party 2016 Simple Calc
 
 Looking over ```checksec```...
 
