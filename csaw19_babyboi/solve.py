@@ -19,8 +19,8 @@ def conn():
 def main():
     r = conn()
 
-    gdb.attach(r)
-    pause()
+    #gdb.attach(r)
+    #pause()
     r.recvuntil("Here I am: 0x")
     leak = int(r.recvn(12), 16)	
 
