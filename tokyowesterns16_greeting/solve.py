@@ -24,7 +24,7 @@ def main():
     function_addr = 0x080485ed
     system_addr = 0x08048490
 
-    #gdb.attach(r, gdbscript = 'b *0x804864f')
+    gdb.attach(r, gdbscript = 'b *0x804864f')
     
     '''
     If you have time to spare and are lazy, but I mean, hey, it works
