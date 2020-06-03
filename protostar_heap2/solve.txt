@@ -1,0 +1,10 @@
+[ auth = (nil), service = (nil) ]                                                                       
+auth AAAA                                                                                               
+[ auth = 0x55aa730a9830, service = (nil) ]                                                              
+reset                                                                                                   
+[ auth = 0x55aa730a9830, service = (nil) ]                                                              
+service AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                   
+[ auth = 0x55aa730a9830, service = 0x55aa730a9850 ]                                                     
+login                                                                                                   
+you have logged in already!                                                                             
+[ auth = 0x55aa730a9830, service = 0x55aa730a9850 ]     
