@@ -1,0 +1,13 @@
+send 32
+send 32
+send 32
+send 32
+
+send -2
+
+send 32
+send 32
+send 32
+send 32
+
+Using the last-in-first-out property of fast bins
