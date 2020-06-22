@@ -169,4 +169,7 @@ no heap leak
 splitting control it and reset pointers in small bin
 0x58 size thing
 
+use COUNTS and MESSAGE to set up fake chunks
+
+
 '''
