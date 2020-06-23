@@ -75,7 +75,7 @@ def main():
     r.sendline("d") #discard current ingredient
     r.sendline("q") # quit add_ingredient menu
     cookbook_name("0x80", "l33t ch3f")
-
+    
     add_ingredient("banana3", 1)
     r.sendline("q")
     
