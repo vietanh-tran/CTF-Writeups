@@ -87,7 +87,7 @@ index:
 	[1] - size of word
 	[2] - ptr to sentence
 	[3] - size of sentence
-	[4] - ptr to the previous word
+	[4] - ptr to the previous word/ sentence
 
 	- last word is stored in global variable IF it exists and isn't just spaces !!!!!! can avoid
 	- if only spaces it frees the word chunk BUT not our chunk !!!!!!!!!!
