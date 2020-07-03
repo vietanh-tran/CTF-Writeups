@@ -7,6 +7,7 @@ ulong * custom_malloc(uint size)
   uint new_size;
   ulong *local_10;
   
+  // Calculates new chunk size in order to fit the aligment
   new_size = size;
   if (size < 0x10) {
     new_size = 0x10;
@@ -14,15 +15,19 @@ ulong * custom_malloc(uint size)
   if ((new_size & 7) != 0) {
     new_size = ((new_size >> 3) + 1) * 8;
   }
+
+
   local_10 = TOPCHUNK_00602558;
   while( true ) {
     if (local_10 == (ulong *)0x0) {
-      local_10 = (ulong *)FUN_00400c30((ulong)new_size);
+      local_10 = (ulong *)mmap_thing((ulong)new_size);
     }
     ppuVar1 = (ulong **)((long)local_10 + ((*local_10 & 0xfffffffffffffffc) - 8));
     if ((ulong)new_size <= (*local_10 & 0xfffffffffffffffc)) break;
     local_10 = *ppuVar1;
   }
+
+
   remainder = ((uint)*local_10 & 0xfffffffc) - new_size;
   *local_10 = *local_10 | 1;
   if (remainder < 0x19) {
@@ -41,6 +46,8 @@ ulong * custom_malloc(uint size)
       }
     }
   }
+
+
   else {
     *local_10 = (ulong)new_size;
     *local_10 = *local_10 | 1;

